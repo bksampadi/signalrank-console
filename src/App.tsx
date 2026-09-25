@@ -1,10 +1,45 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
+import {
+  checkSignalRankHealth,
+  isSignalRankConfigured,
+} from './api/signalrank'
 import { QueryForm } from './components/QueryForm'
-import { ServiceStatus } from './components/ServiceStatus'
+import {
+  ServiceStatus,
+  type ServiceStatusValue,
+} from './components/ServiceStatus'
 
 function App() {
   const [submittedQuery, setSubmittedQuery] = useState<string | null>(null)
+
+  const [serviceStatus, setServiceStatus] = useState<ServiceStatusValue>(() =>
+  isSignalRankConfigured() ? 'checking' : 'not-connected',
+)
+
+  useEffect(() => {
+  if (!isSignalRankConfigured()) {
+    return
+  }
+
+  const controller = new AbortController()
+
+  void checkSignalRankHealth(controller.signal)
+    .then(() => {
+      setServiceStatus('online')
+    })
+    .catch((error: unknown) => {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return
+      }
+
+      setServiceStatus('offline')
+    })
+
+  return () => {
+    controller.abort()
+  }
+}, [])
 
   function handleQuerySubmit(query: string) {
     setSubmittedQuery(query)
@@ -21,7 +56,7 @@ function App() {
           </p>
         </div>
 
-        <ServiceStatus status="not-connected" />
+        <ServiceStatus status={serviceStatus} />
       </header>
 
       <main className="app-main">
