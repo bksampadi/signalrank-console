@@ -1,75 +1,62 @@
-# React + TypeScript + Vite
+# SignalRank Console
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript interface for SignalRank-RAG.
 
-Currently, two official plugins are available:
+SignalRank Console is the browser-facing product layer for querying SignalRank-RAG, inspecting answers and evidence, and controlling retrieval behavior.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Architecture
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```mermaid
+flowchart LR
+    A[Browser] --> B[SignalRank Console]
+    B --> C[SignalRank-RAG API]
+    C --> D[Retrieval and evidence]
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+SignalRank Console focuses on frontend and product engineering; retrieval and LLM functionality remain in SignalRank-RAG.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Status
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Early development.
 
+Currently implemented:
+
+- React + TypeScript application shell
+- SignalRank API health checking
+- Environment-based API configuration
+- Responsive query and result interface
+
+## Development
+
+Requires Node.js and npm.
+
+Create `.env.local` from `.env.example`, then run:
+
+```bash
+npm install
+npm run dev
 ```
+
+Configure the SignalRank API endpoint in `.env.local`:
+
+```env
+VITE_SIGNALRANK_API_BASE_URL=http://localhost:8000
+```
+
+## Quality checks
+
+```bash
+npm run lint
+npm run build
+```
+
+## Related project
+
+[SignalRank-RAG](https://github.com/bksampadi/SignalRank-RAG) — retrieval-augmented generation backend used by this console.
+
+## Stack
+
+- TypeScript
+- React
+- Vite
+- ESLint
