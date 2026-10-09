@@ -200,4 +200,130 @@
   .query-form button {
     width: 100%;
   }
+
+  .query-form__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  }
+
+  .query-form__controls label {
+    display: grid;
+    gap: 7px;
+    color: #4f4f4f;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .query-form__controls select,
+  .query-form__controls input {
+    min-height: 42px;
+    box-sizing: border-box;
+    padding: 8px 12px;
+    border: 1px solid #c9c9c9;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #171717;
+    font: inherit;
+  }
+
+  .query-form__controls select:focus,
+  .query-form__controls input:focus {
+    border-color: #171717;
+    outline: 2px solid #171717;
+    outline-offset: 2px;
+  }
+
+  .query-form__controls input {
+    width: 90px;
+  }
+
+  .retrieval-result {
+    display: grid;
+    gap: 20px;
+  }
+
+  .retrieval-result__summary {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    color: #676767;
+    font-size: 0.875rem;
+  }
+
+  .evidence-list {
+    display: grid;
+    gap: 14px;
+  }
+
+  .evidence-card {
+    padding: 20px;
+    border: 1px solid #dedede;
+    border-radius: 12px;
+    background: #fafafa;
+  }
+
+  .evidence-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    color: #626262;
+    font-size: 0.8rem;
+  }
+
+  .evidence-card__header > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .evidence-card__rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: #171717;
+    color: #ffffff;
+    font-weight: 700;
+  }
+
+  .evidence-card__score {
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .evidence-card__text {
+    margin: 18px 0;
+    color: #222222;
+    line-height: 1.65;
+  }
+
+  .evidence-card__ids {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    color: #777777;
+    font-family: monospace;
+    font-size: 0.75rem;
+  }
+
+  @media (max-width: 700px) {
+    .query-form__controls {
+      flex-direction: column;
+    }
+
+    .query-form__controls input {
+      width: 100%;
+    }
+
+    .evidence-card__header {
+      flex-direction: column;
+      gap: 10px;
+    }
+  }
 }

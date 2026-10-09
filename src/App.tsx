@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react'
+
 import './App.css'
+
 import {
   checkSignalRankHealth,
   isSignalRankConfigured,
+  retrieveSignalRankEvidence,
+  type RetrieveResponse,
 } from './api/signalrank'
-import { QueryForm } from './components/QueryForm'
+import {
+  QueryForm,
+  type QuerySubmission,
+} from './components/QueryForm'
 import {
   ServiceStatus,
   type ServiceStatusValue,
@@ -12,37 +19,66 @@ import {
 
 function App() {
   const [submittedQuery, setSubmittedQuery] = useState<string | null>(null)
+  const [retrievalResult, setRetrievalResult] =
+    useState<RetrieveResponse | null>(null)
+  const [queryError, setQueryError] = useState<string | null>(null)
+  const [isQuerying, setIsQuerying] = useState(false)
 
   const [serviceStatus, setServiceStatus] = useState<ServiceStatusValue>(() =>
-  isSignalRankConfigured() ? 'checking' : 'not-connected',
-)
+    isSignalRankConfigured() ? 'checking' : 'not-connected',
+  )
 
   useEffect(() => {
-  if (!isSignalRankConfigured()) {
-    return
-  }
+    if (!isSignalRankConfigured()) {
+      return
+    }
 
-  const controller = new AbortController()
+    const controller = new AbortController()
 
-  void checkSignalRankHealth(controller.signal)
-    .then(() => {
-      setServiceStatus('online')
-    })
-    .catch((error: unknown) => {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        return
-      }
+    void checkSignalRankHealth(controller.signal)
+      .then(() => {
+        setServiceStatus('online')
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return
+        }
 
-      setServiceStatus('offline')
-    })
+        setServiceStatus('offline')
+      })
 
-  return () => {
-    controller.abort()
-  }
-}, [])
+    return () => {
+      controller.abort()
+    }
+  }, [])
 
-  function handleQuerySubmit(query: string) {
+  async function handleQuerySubmit({
+    query,
+    mode,
+    topK,
+  }: QuerySubmission) {
     setSubmittedQuery(query)
+    setRetrievalResult(null)
+    setQueryError(null)
+    setIsQuerying(true)
+
+    try {
+      const response = await retrieveSignalRankEvidence({
+        query,
+        mode,
+        top_k: topK,
+      })
+
+      setRetrievalResult(response)
+    } catch (error: unknown) {
+      setQueryError(
+        error instanceof Error
+          ? error.message
+          : 'SignalRank retrieval failed',
+      )
+    } finally {
+      setIsQuerying(false)
+    }
   }
 
   return (
@@ -68,32 +104,102 @@ function App() {
             </div>
           </div>
 
-          <QueryForm onSubmit={handleQuerySubmit} />
+          <QueryForm
+            onSubmit={handleQuerySubmit}
+            isSubmitting={isQuerying}
+          />
         </section>
 
         <section className="panel" aria-labelledby="result-heading">
           <div className="panel__header">
             <div>
               <p className="panel__eyebrow">Result</p>
-              <h2 id="result-heading">Answer and evidence</h2>
+              <h2 id="result-heading">Ranked evidence</h2>
             </div>
           </div>
 
-          {submittedQuery ? (
-            <div className="empty-state">
-              <p className="empty-state__title">API not connected yet</p>
-              <p>
-                The query was captured locally, but nothing has been sent to
-                SignalRank-RAG.
+          {isQuerying ? (
+            <div className="empty-state" role="status">
+              <p className="empty-state__title">
+                Retrieving evidence…
               </p>
-              <blockquote>{submittedQuery}</blockquote>
+              <p>SignalRank is searching and ranking the corpus.</p>
             </div>
+          ) : queryError ? (
+            <div className="empty-state" role="alert">
+              <p className="empty-state__title">
+                Evidence retrieval unavailable
+              </p>
+              <p>{queryError}</p>
+
+              {submittedQuery && <blockquote>{submittedQuery}</blockquote>}
+            </div>
+          ) : retrievalResult ? (
+            retrievalResult.results.length === 0 ? (
+              <div className="empty-state">
+                <p className="empty-state__title">
+                  No evidence retrieved
+                </p>
+                <p>
+                  SignalRank returned no evidence for this query and
+                  retrieval configuration.
+                </p>
+                <blockquote>{retrievalResult.query}</blockquote>
+              </div>
+            ) : (
+              <div className="retrieval-result">
+                <div className="retrieval-result__summary">
+                  <span>
+                    Mode: <strong>{retrievalResult.mode}</strong>
+                  </span>
+                  <span>
+                    {retrievalResult.results.length}{' '}
+                    {retrievalResult.results.length === 1
+                      ? 'result'
+                      : 'results'}
+                  </span>
+                </div>
+
+                <div className="evidence-list">
+                  {retrievalResult.results.map((result) => (
+                    <article
+                      className="evidence-card"
+                      key={`${result.doc_id}:${result.chunk_id}`}
+                    >
+                      <div className="evidence-card__header">
+                        <div>
+                          <span className="evidence-card__rank">
+                            #{result.rank}
+                          </span>
+                          <span>{result.source_path}</span>
+                        </div>
+
+                        <span className="evidence-card__score">
+                          Score {result.score.toFixed(4)}
+                        </span>
+                      </div>
+
+                      <p className="evidence-card__text">
+                        {result.text}
+                      </p>
+
+                      <div className="evidence-card__ids">
+                        <span>Document: {result.doc_id}</span>
+                        <span>Chunk: {result.chunk_id}</span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )
           ) : (
             <div className="empty-state">
-              <p className="empty-state__title">No query has been run yet.</p>
+              <p className="empty-state__title">
+                No query has been run yet.
+              </p>
               <p>
-                Enter a question above. Answer retrieval will be connected in
-                the next implementation slice.
+                Enter a question above to retrieve ranked evidence from
+                SignalRank-RAG.
               </p>
             </div>
           )}
