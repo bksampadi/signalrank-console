@@ -19,7 +19,7 @@ export function ServiceStatus({ status }: ServiceStatusProps) {
   return (
     <div className="service-status" data-status={status}>
       <span className="service-status__dot" aria-hidden="true" />
-      <span>API {statusLabels[status]}</span>
+      <span>Gateway {statusLabels[status]}</span>
     </div>
   )
 }
