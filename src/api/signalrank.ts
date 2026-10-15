@@ -18,6 +18,7 @@ export type RetrieveRequest = {
   query: string
   mode: RetrievalMode
   top_k: number
+  turnstile_token: string
 }
 
 export type RetrieveResponse = {

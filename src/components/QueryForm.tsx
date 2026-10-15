@@ -3,10 +3,13 @@ import type { SubmitEvent } from 'react'
 
 import type { RetrievalMode } from '../api/signalrank'
 
+import { Turnstile } from './Turnstile'
+
 export type QuerySubmission = {
   query: string
   mode: RetrievalMode
   topK: number
+  turnstileToken: string
 }
 
 type QueryFormProps = {
@@ -22,22 +25,40 @@ export function QueryForm({
   const [mode, setMode] = useState<RetrievalMode>('hybrid')
   const [topK, setTopK] = useState(5)
 
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const [resetCount, setResetCount] = useState(0)
+
   const trimmedQuery = query.trim()
   const validTopK = Number.isInteger(topK) && topK >= 1 && topK <= 10
 
-  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
+  event.preventDefault()
 
-    if (!trimmedQuery || !validTopK || isSubmitting) {
-      return
-    }
+  if (
+    !trimmedQuery ||
+    !validTopK ||
+    !turnstileToken ||
+    isSubmitting
+  ) {
+    return
+  }
 
-    void onSubmit({
+  const token = turnstileToken
+
+  // Turnstile tokens are single-use.
+  setTurnstileToken('')
+
+  try {
+    await onSubmit({
       query: trimmedQuery,
       mode,
       topK,
+      turnstileToken: token,
     })
+  } finally {
+    setResetCount((count) => count + 1)
   }
+}
 
   return (
     <form className="query-form" onSubmit={handleSubmit}>
@@ -85,6 +106,11 @@ export function QueryForm({
         </label>
       </div>
 
+      <Turnstile
+        onVerify={setTurnstileToken}
+        resetCount={resetCount}
+      />
+
       <div className="query-form__actions">
         <span className="query-form__hint">
           Retrieve ranked evidence directly from SignalRank-RAG.
@@ -92,7 +118,7 @@ export function QueryForm({
 
         <button
           type="submit"
-          disabled={!trimmedQuery || !validTopK || isSubmitting}
+          disabled={!trimmedQuery || !validTopK || !turnstileToken || isSubmitting}
         >
           {isSubmitting ? 'Retrieving…' : 'Run query'}
         </button>
