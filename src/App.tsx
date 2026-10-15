@@ -56,6 +56,7 @@ function App() {
     query,
     mode,
     topK,
+    turnstileToken,
   }: QuerySubmission) {
     setSubmittedQuery(query)
     setRetrievalResult(null)
@@ -67,6 +68,7 @@ function App() {
         query,
         mode,
         top_k: topK,
+        turnstile_token: turnstileToken,
       })
 
       setRetrievalResult(response)

@@ -18,6 +18,7 @@ export type RetrieveRequest = {
   query: string
   mode: RetrievalMode
   top_k: number
+  turnstile_token: string
 }
 
 export type RetrieveResponse = {
@@ -45,7 +46,24 @@ export async function checkSignalRankHealth(
   })
 
   if (!response.ok) {
-    throw new Error(`Health check failed with status ${response.status}`)
+    throw new Error(`Health check failed: ${response.status}`)
+  }
+
+  const contentType = response.headers.get('content-type')
+
+  if (!contentType?.includes('application/json')) {
+    throw new Error('Health endpoint did not return JSON')
+  }
+
+  const data: unknown = await response.json()
+
+  if (
+    typeof data !== 'object' ||
+    data === null ||
+    !('status' in data) ||
+    data.status !== 'ok'
+  ) {
+    throw new Error('Invalid API health response')
   }
 }
 
